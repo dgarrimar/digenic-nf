@@ -73,12 +73,48 @@ process pairs {
 
     script:
     """
-    nchoose2.py -n \$(bcftools view -H $geno | wc -l) -o pairs.txt
+    bcftools query -f '%CHROM:%POS\\n' $geno > variants.txt
+    combos.py -i variants.txt > pairs.txt
     """
 }
 
+process chi2 {
+
+   tag {id}
+
+   input:
+   tuple val(id), path(chunk)
+   path(geno) 
+   path(geno_index)
+
+   output:
+   tuple val(id), path('sstats.*')
+
+   shell:
+   ''' 
+   one_bkp=''
+   cat !{chunk} | while read line; do 
+       one=$(echo $line | cut -d ' ' -f1)
+       two=$(echo $line | cut -d ' ' -f2)
+       if [[ $one == $one_bkp ]]; then
+           bcftools view -r $two -H !{geno} | cut -f10- > two.txt
+       else
+           one_bkp=$one
+           bcftools view -r $one -H !{geno} | cut -f10- > one.txt
+           bcftools view -r $two -H !{geno} | cut -f10- > two.txt
+       fi
+       cat one.txt two.txt > vp.txt
+       touch sstats.!{id}
+       break
+   done
+   '''
+}
+
 workflow {
-    channel.fromPath(params.geno) \
-      | pairs \
+    geno = channel.value(params.geno) 
+    geno_index = geno.map{it.replace(".vcf.gz", ".vcf.gz.tbi")}
+    chunks = pairs(geno) | splitText(by: 500, file: 'chunk') | map {[it.name.replace("chunk.",""), it]}  
+    chunks.view()
+    chi2 (chunks, geno, geno_index) \
       | view
 }
