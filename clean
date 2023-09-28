@@ -1,1 +1,1 @@
-rm -rf .nextflow* work trace*
+rm -rf .nextflow* work trace* dag* report* timeline*

@@ -1,5 +1,8 @@
 result
 singularity
+dag* 
+report* 
+timeline*
 .nextflow*
 trace*
 work
