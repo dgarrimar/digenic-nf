@@ -24,7 +24,11 @@
 
 //  Define parameters
 
+params.dir = 'result'
+params.out = 'sstats.txt'
+params.cs = 20
 params.help = false
+
 
 // Print usage and help
 
@@ -38,7 +42,10 @@ if (params.help) {
     log.info '    nextflow run digenic.nf [options]'
     log.info ''
     log.info 'Parameters:'
-    log.info ' --geno GENOTYPES           genotypes in VCF format (default: $geno)'
+    log.info " --geno GENOTYPES            genotypes in VCF format (default: $params.geno)"
+    log.info " --cs CHUNK SIZE             chunk size (default: $params.cs)"
+    log.info " --dir DIRECTORY             output directory (default: $params.dir)"
+    log.info " --out OUTPUT                output file (default: $params.out)"
     log.info ''
     exit(1)
 }
@@ -54,14 +61,26 @@ log.info ''
 // Mandatory options
 
 if (!params.geno) {
-    exit 1, "Genotype file not specified."
+    exit 1, 'Genotype file not specified.'
 } 
 
-// Pipeline
+// Processes
 
-/*
- *  Generate pairs 
- */
+process prep {
+
+    input:
+    path(geno)
+
+    output:
+    tuple path('gt.traw.gz'), path('gt.traw.gz.tbi')
+
+    """
+    plink2 --vcf $geno --recode Av --out gt
+    cut -f3,5,6 --complement gt.traw > tmpfile; mv tmpfile gt.traw
+    bgzip gt.traw
+    tabix -s 1 -b 3 -e 3 -S 1 gt.traw.gz
+    """
+}
 
 process pairs {
 
@@ -73,22 +92,19 @@ process pairs {
 
     script:
     """
-    bcftools query -f '%CHROM:%POS\\n' $geno > variants.txt
+    bcftools query -f '%CHROM:%POS-%POS\\n' $geno > variants.txt
     combos.py -i variants.txt > pairs.txt
     """
 }
 
 process chi2 {
 
-   tag {id}
-
    input:
-   tuple val(id), path(chunk)
-   path(geno) 
-   path(geno_index)
+   path(chunk)
+   tuple path(genop), path(genop_idx)
 
    output:
-   tuple val(id), path('sstats.*')
+   path('sstats.*')
 
    shell:
    ''' 
@@ -97,24 +113,36 @@ process chi2 {
        one=$(echo $line | cut -d ' ' -f1)
        two=$(echo $line | cut -d ' ' -f2)
        if [[ $one == $one_bkp ]]; then
-           bcftools view -r $two -H !{geno} | cut -f10- > two.txt
+           tabix !{genop} $two | cut -f4- > two.txt
        else
            one_bkp=$one
-           bcftools view -r $one -H !{geno} | cut -f10- > one.txt
-           bcftools view -r $two -H !{geno} | cut -f10- > two.txt
+           tabix !{genop} $one | cut -f4- > one.txt
+           tabix !{genop} $two | cut -f4- > two.txt
        fi
        cat one.txt two.txt > vp.txt
-       touch sstats.!{id}
-       break
-   done
+       echo -e "$one $two $(chi2.R)"
+   done > sstats.txt
    '''
 }
 
+process end {
+    publishDir "${params.dir}", mode: 'copy'
+
+    input:
+    path(sstats)
+
+    output:
+    path(sstats)
+
+    """
+    """
+}
+
+// Pipeline
+
 workflow {
     geno = channel.value(params.geno) 
-    geno_index = geno.map{it.replace(".vcf.gz", ".vcf.gz.tbi")}
-    chunks = pairs(geno) | splitText(by: 500, file: 'chunk') | map {[it.name.replace("chunk.",""), it]}  
-    chunks.view()
-    chi2 (chunks, geno, geno_index) \
-      | view
+    genop = prep(geno)
+    chunks = pairs(geno) | splitText(by: params.cs, file: 'chunk')
+    chi2 (chunks, genop) | collectFile(name: "${params.out}") | end 
 }

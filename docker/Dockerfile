@@ -43,3 +43,6 @@ RUN wget --quiet https://s3.amazonaws.com/plink2-assets/alpha4/plink2_linux_x86_
 
 ## Install python packages
 RUN pip3 install numpy
+
+## Install R packages
+RUN R -e 'install.packages(c("optparse", "data.table"))'
