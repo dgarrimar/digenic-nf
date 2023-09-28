@@ -26,6 +26,8 @@
 
 params.dir = 'result'
 params.out = 'sstats.txt'
+params.geno = null
+params.pairs = null
 params.cs = 20
 params.help = false
 
@@ -43,6 +45,7 @@ if (params.help) {
     log.info ''
     log.info 'Parameters:'
     log.info " --geno GENOTYPES            genotypes in VCF format (default: $params.geno)"
+    log.info " --pairs PAIRS               variant pairs (default: $params.pairs)"
     log.info " --cs CHUNK SIZE             chunk size (default: $params.cs)"
     log.info " --dir DIRECTORY             output directory (default: $params.dir)"
     log.info " --out OUTPUT                output file (default: $params.out)"
@@ -56,7 +59,12 @@ log.info ''
 log.info 'Parameters'
 log.info '------------------'
 log.info "Genotypes                    : ${params.geno}"
+log.info "Variant pairs                : ${params.pairs}"
+log.info "Chunk size                   : ${params.cs}"
+log.info "Output directory             : ${params.dir}"
+log.info "Output file                  : ${params.out}"
 log.info ''
+
 
 // Mandatory options
 
