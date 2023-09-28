@@ -151,6 +151,10 @@ process end {
 workflow {
     geno = channel.value(params.geno) 
     genop = prep(geno)
-    chunks = pairs(geno) | splitText(by: params.cs, file: 'chunk')
+    if( params.pairs ) {
+        chunks = channel.fromPath(params.pairs).splitText(by: params.cs, file: 'chunk')
+    } else {
+        chunks = pairs(geno) | splitText(by: params.cs, file: 'chunk')
+    }
     chi2 (chunks, genop) | collectFile(name: "${params.out}") | end 
 }
