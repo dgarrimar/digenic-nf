@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(data.table)
+library(bigtabulate)
 
 # Load data
 snp1 = fread("one.txt", h = F, data.table=F)[,1]
@@ -11,43 +12,42 @@ snp1 = snp0
 n = length(snp1)
 
 # Recode genotypes and obtain freq tables
-nms = c(0,1,2)
-recode = function(snp, nms = c(0, 1, 2)){
-  tbl = tabulate(snp+1, 3)
-  names(tbl) = nms
-  keep = tbl>0
-  tbl = tbl[keep]
-  nms = nms[keep]
-  minor = as.character(nms[which.min(tbl)])
-  major = as.character(nms[!nms %in% c(1, minor)])
-  snp = as.character(snp)
-  snp = .Internal(gsub(minor, "m", snp, F, F, T, F))
-  snp = .Internal(gsub("1", "m", snp, F, F, T, F))
-  snp = .Internal(gsub(major, "M", snp, F, F, T, F))
-  return(as.factor(snp))
-}
+nms1 = nms2 = as.character(c(0,1,2))
 
-snp1 = recode(snp1)
-snp2 = recode(snp2)
+tbl1 = tabulate(snp1+1, 3)
+names(tbl1) = nms1
+keep1 = tbl1>0
+tbl1 = tbl1[keep1]
+nms1 = nms1[keep1]
+minor1 = nms1[which.min(tbl1)]
+major1 = nms1[!nms1 %in% c(1, minor1)]
+minor_het1 = unique(c(minor1, "1"))
 
-tbl1 = tabulate(snp1)
-names(tbl1) = levels(snp1)
+tbl2 = tabulate(snp2+1, 3)
+names(tbl2) = nms2
+keep2 = tbl2>0
+tbl2 = tbl2[keep2]
+nms2 = nms2[keep2]
+minor2 = nms2[which.min(tbl2)]
+major2 = nms2[!nms2 %in% c(1, minor2)]
+minor_het2 = unique(c(minor2, "1"))
 
-tbl2 = tabulate(snp2)
-names(tbl2) = levels(snp2)
+tbl1_rec = c(sum(tbl1[minor_het1]), tbl1[major1]) 
+tbl2_rec = c(sum(tbl2[minor_het2]), tbl2[major2]) 
+
+tblJ = bigtabulate(cbind(snp1, snp2), 1:2)
 
 # Observed freqs
-tblJ = table(snp1, snp2)
-O1 = tblJ[1,1]
-O2 = tblJ[1,2]
-O3 = tblJ[2,1]
-O4 = tblJ[2,2]
+O1 = sum(tblJ[minor_het1, minor_het2])
+O2 = sum(tblJ[minor_het1, major2])
+O3 = sum(tblJ[major1, minor_het2])
+O4 = sum(tblJ[major1, major2])
 
 # Expected freqs
-E1 = tbl1[1]/n*tbl2[1]
-E2 = tbl1[1]/n*tbl2[2]
-E3 = tbl1[2]/n*tbl2[1]
-E4 = tbl1[2]/n*tbl2[2]
+E1 = tbl1_rec[1]/n*tbl2_rec[1]
+E2 = tbl1_rec[1]/n*tbl2_rec[2]
+E3 = tbl1_rec[2]/n*tbl2_rec[1]
+E4 = tbl1_rec[2]/n*tbl2_rec[2]
 
 # Goodness-of-fit Chi2 test
 c2t = chisq.test(c(O1, O2, O3, O4), p = c(E1, E2, E3, E4)/n)
