@@ -3,28 +3,38 @@
 library(data.table)
 
 # Load data
-snp1 = as.numeric(fread("one.txt", h = F))
-snp2 = as.numeric(fread("two.txt", h = F))
+snp1 = fread("one.txt", h = F, data.table=F)[,1]
+snp2 = fread("two.txt", h = F, data.table=F)[,1]
 snp0 = snp1[!is.na(snp1) & !is.na(snp2)]
 snp2 = snp2[!is.na(snp1) & !is.na(snp2)]
 snp1 = snp0
 n = length(snp1)
 
 # Recode genotypes and obtain freq tables
-recode <- function(snp){
-    tbl = table(snp)
-    minor = names(which.min(tbl))
-    major = names(tbl)[!names(tbl) %in% c(1, minor)]
-    snp = gsub(minor, "m", snp)
-    snp = gsub(1, "m", snp)
-    snp = gsub(major, "M", snp)
-    return(snp)
+nms = c(0,1,2)
+recode = function(snp, nms = c(0, 1, 2)){
+  tbl = tabulate(snp+1, 3)
+  names(tbl) = nms
+  keep = tbl>0
+  tbl = tbl[keep]
+  nms = nms[keep]
+  minor = as.character(nms[which.min(tbl)])
+  major = as.character(nms[!nms %in% c(1, minor)])
+  snp = as.character(snp)
+  snp = .Internal(gsub(minor, "m", snp, F, F, T, F))
+  snp = .Internal(gsub("1", "m", snp, F, F, T, F))
+  snp = .Internal(gsub(major, "M", snp, F, F, T, F))
+  return(as.factor(snp))
 }
 
 snp1 = recode(snp1)
 snp2 = recode(snp2)
-tbl1 = table(snp1)
-tbl2 = table(snp2)
+
+tbl1 = tabulate(snp1)
+names(tbl1) = levels(snp1)
+
+tbl2 = tabulate(snp2)
+names(tbl2) = levels(snp2)
 
 # Observed freqs
 tblJ = table(snp1, snp2)

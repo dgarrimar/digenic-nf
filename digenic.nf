@@ -74,7 +74,7 @@ if (!params.geno) {
 
 // Processes
 
-process prep {
+process prep_vcf {
 
     input:
     path(geno)
@@ -88,6 +88,26 @@ process prep {
     bgzip gt.traw
     tabix -s 1 -b 3 -e 3 -S 1 gt.traw.gz
     """
+}
+
+process prep_plink {
+
+    input:
+    tuple path(pgen),path(pvar),path(psam)
+
+    output:
+    tuple path('gt.traw.gz'), path('gt.traw.gz.tbi')
+
+    """
+    geno=\$(echo $pgen | sed -r 's/\\..+//')
+    plink2 --pfile \$geno -make-bed --out \$geno
+    plink2 --bfile \$geno --recode Av --out gt
+    cut -f3,5,6 --complement gt.traw > tmpfile; mv tmpfile gt.traw
+    bgzip gt.traw
+    tabix -s 1 -b 3 -e 3 -S 1 gt.traw.gz
+    """
+
+
 }
 
 process pairs {
@@ -121,13 +141,12 @@ process chi2 {
        one=$(echo $line | cut -d ' ' -f1)
        two=$(echo $line | cut -d ' ' -f2)
        if [[ $one == $one_bkp ]]; then
-           tabix !{genop} $two | cut -f4- > two.txt
+           tabix !{genop} $two | cut -f4- | sed 's/\\t/\\n/g' > two.txt
        else
            one_bkp=$one
-           tabix !{genop} $one | cut -f4- > one.txt
-           tabix !{genop} $two | cut -f4- > two.txt
+           tabix !{genop} $one | cut -f4- | sed 's/\\t/\\n/g' > one.txt
+           tabix !{genop} $two | cut -f4- | sed 's/\\t/\\n/g' > two.txt
        fi
-       cat one.txt two.txt > vp.txt
        echo -e "$one $two $(chi2.R)"
    done > sstats.txt
    '''
@@ -149,12 +168,14 @@ process end {
 // Pipeline
 
 workflow {
-    geno = channel.value(params.geno) 
-    genop = prep(geno)
+    // geno = channel.value(params.geno) 
+    geno = Channel.value([file("${params.geno}.pgen"), file("${params.geno}.pvar"), file("${params.geno}.psam") ])
+    genop = prep_plink(geno)
     if( params.pairs ) {
-        chunks = channel.fromPath(params.pairs).splitText(by: params.cs, file: 'chunk')
+        chunks = Channel.fromPath(params.pairs).splitText(by: params.cs, file: 'chunk')
     } else {
         chunks = pairs(geno) | splitText(by: params.cs, file: 'chunk')
-    }
+    
+   }
     chi2 (chunks, genop) | collectFile(name: "${params.out}") | end 
 }
