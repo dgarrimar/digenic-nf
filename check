@@ -1,1 +1,0 @@
-diff <(cut -d ' ' -f 1-12 result/sstats.txt) <(cut -d ' ' -f 1-12 result/sstats.safe)

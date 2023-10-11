@@ -136,23 +136,9 @@ process chi2 {
    output:
    path('sstats.*')
 
-   shell:
-   ''' 
-   one_bkp=''
-   cat !{chunk} | while read line; do 
-       one=$(echo $line | cut -d ' ' -f1)
-       two=$(echo $line | cut -d ' ' -f2)
-       if [[ $one == $one_bkp ]]; then
-           tabix !{genop} $two | cut -f4- | sed 's/\\t/\\n/g' > two.txt
-       else
-           one_bkp=$one
-           tabix !{genop} $one | cut -f4- | sed 's/\\t/\\n/g' > one.txt
-           tabix !{genop} $two | cut -f4- | sed 's/\\t/\\n/g' > two.txt
-       fi
-       paste one.txt two.txt > all
-       echo -e "$one $two $(chi2.R)"
-   done > sstats.!{id}
-   '''
+   """ 
+   chi2f.R $chunk $genop > sstats.$id
+   """
 }
 
 process end {
