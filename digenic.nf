@@ -127,8 +127,10 @@ process pairs {
 
 process chi2 {
 
+   tag { id }
+
    input:
-   path(chunk)
+   tuple val(id), path(chunk)
    tuple path(genop), path(genop_idx)
 
    output:
@@ -149,7 +151,7 @@ process chi2 {
            paste one.txt two.txt > all
        fi
        echo -e "$one $two $(chi2.R)"
-   done > sstats.txt
+   done > sstats.!{id}
    '''
 }
 
@@ -173,10 +175,9 @@ workflow {
     geno = Channel.value([file("${params.geno}.pgen"), file("${params.geno}.pvar"), file("${params.geno}.psam") ])
     genop = prep_plink(geno)
     if( params.pairs ) {
-        chunks = Channel.fromPath(params.pairs).splitText(by: params.cs, file: 'chunk')
+        chunks = Channel.fromPath(params.pairs).splitText(by: params.cs, file: "chunk").map(){[it.name.replace("chunk.", ""), it]}
     } else {
-        chunks = pairs(geno) | splitText(by: params.cs, file: 'chunk')
-    
-   }
-    chi2 (chunks, genop) | collectFile(name: "${params.out}") | end 
+        chunks = pairs(geno) | splitText(by: params.cs)
+    }
+    chi2 (chunks, genop) | collectFile(name: "${params.out}", sort: {it.name}) | end 
 }
