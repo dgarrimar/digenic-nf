@@ -146,6 +146,7 @@ process chi2 {
            one_bkp=$one
            tabix !{genop} $one | cut -f4- | sed 's/\\t/\\n/g' > one.txt
            tabix !{genop} $two | cut -f4- | sed 's/\\t/\\n/g' > two.txt
+           paste one.txt two.txt > all
        fi
        echo -e "$one $two $(chi2.R)"
    done > sstats.txt

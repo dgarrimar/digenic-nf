@@ -1,14 +1,14 @@
 #!/usr/bin/env Rscript
 
+start=Sys.time()
 library(data.table)
 library(bigtabulate)
 
 # Load data
-snp1 = fread("one.txt", h = F, data.table=F)[,1]
-snp2 = fread("two.txt", h = F, data.table=F)[,1]
-snp0 = snp1[!is.na(snp1) & !is.na(snp2)]
-snp2 = snp2[!is.na(snp1) & !is.na(snp2)]
-snp1 = snp0
+snps = fread("all", h = F, data.table=F)
+snps = snps[complete.cases(snps), ]
+snp1 = snps[,1]
+snp2 = snps[,2]
 n = length(snp1)
 
 # Recode genotypes and obtain freq tables
@@ -35,7 +35,7 @@ minor_het2 = unique(c(minor2, "1"))
 tbl1_rec = c(sum(tbl1[minor_het1]), tbl1[major1]) 
 tbl2_rec = c(sum(tbl2[minor_het2]), tbl2[major2]) 
 
-tblJ = bigtabulate(cbind(snp1, snp2), 1:2)
+tblJ = bigtabulate(snps, 1:2)
 
 # Observed freqs
 O1 = sum(tblJ[minor_het1, minor_het2])
@@ -52,4 +52,6 @@ E4 = tbl1_rec[2]/n*tbl2_rec[2]
 # Goodness-of-fit Chi2 test
 c2t = chisq.test(c(O1, O2, O3, O4), p = c(E1, E2, E3, E4)/n)
 
-cat(paste(O1,O2,O3,O4),paste(E1,E2,E3,E4),c2t$statistic,c2t$p.value)
+end=Sys.time()
+cat(paste(O1,O2,O3,O4),paste(E1,E2,E3,E4),c2t$statistic,c2t$p.value,format(end-start))
+
