@@ -1,9 +1,10 @@
 data/ukb
-result
+result*
 singularity
-dag* 
-report* 
-timeline*
+*.dot
+*.html
 .nextflow*
 trace*
 work
+run*
+log*
