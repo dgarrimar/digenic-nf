@@ -1,0 +1,18 @@
+## REGIONS
+# ExonsListAID.txt (Ferran Casals by email)
+sed -r 's/\r//g; s/chr//' ExonsListAID.txt | awk 'BEGIN{FS=OFS="\t"}{print $2,$3,$4,$1}' | sort -k1,1V -k2,2n -k3,3n > aid_exons.bed
+
+
+## INDIVIDUALS
+ln -s /nfs/no_backup_isis/rg/dgarrido/downloads/UKBB/ukb46228/withdraw50141_131_20230915.txt withdraw.txt
+ln -s /nfs/no_backup_isis/rg/dgarrido/downloads/UKBB/ukb46228/gt/ukb22828_c22_b0_v3_s487271.sample chr22.sample
+ln -s /no_backup_isis/rg/dgarrido/downloads/UKBB/ukb46228/ukb_rel_a50141_s488118.dat input/king.txt
+
+cut -f1,14 /nfs/no_backup_isis/rg/dgarrido/downloads/UKBB/ukb46228/ukb46228.tab2 | sed '1d' > ancestry_sr.txt
+Rscript pcaproc.R
+
+cut -d ' ' -f1 chr22.sample | sed '1,2d' | grep -Fvf withdraw.txt | grep -Ff european.txt > keep.txt
+
+Rscript rmrel.R
+
+grep -Ffv related2rm.txt keep.txt > tmp; mv tmp keep.txt
