@@ -32,6 +32,7 @@ params.miss = 0.05
 params.hwe = 0.00001
 params.keep = null
 params.regions = null
+params.chr = null
 params.help = false
 
 
@@ -55,6 +56,7 @@ if (params.help) {
     log.info " --hwe HWE                   hardy-weinberg P-value threshold (default: $params.hwe)"
     log.info " --keep KEEP                 single-column file with the list of individuals to keep (default: $params.keep)"
     log.info " --regions REGIONS           BED file with the regions to keep (default: $params.regions)"
+    log.info " --chr CHR                   chr (single chr, comma-separated list, range via colon) (default: $params.chr)"
     log.info ''
     exit(1)
 }
@@ -72,12 +74,12 @@ log.info "Max. missingess rate (vars)  : ${params.miss}"
 log.info "HWE P-value treshold         : ${params.hwe}"
 log.info "List of individuals          : ${params.keep}"
 log.info "List of regions (BED)        : ${params.regions}"
+log.info "List of chromosomes          : ${params.chr}"
 log.info ''
 
 
 // Mandatory options
 
-/*
 if (!params.geno_dir) {
     exit 1, 'Genotype directory not specified.'
 } else if (! params.keep) {
@@ -85,7 +87,21 @@ if (!params.geno_dir) {
 } else if (! params.regions) {
     exit 1, 'Regions BED file not specified'
 }
-*/
+
+// Expand chr parameter
+def chrlist = []
+if (params.chr =~ /,/) {
+     chrlist = params.chr.tokenize(',')
+} else if (params.chr =~ /:/) {
+    def (start, end) = params.chr.tokenize(':')
+    def val = start.toInteger()
+    while (val <= end.toInteger()) {
+        chrlist += val
+        val += 1
+    }
+} else {
+    chrlist = params.chr
+}
 
 // Processes
 
@@ -95,9 +111,11 @@ process filter {
 
     input:
     tuple val(chr), file(bgen), file(sample)
-
+    file(keep)
+    file(regions)
+ 
     output:
-    tuple val(chr), file("chr${chr}.pgen"), file("chr${chr}.pvar"), file("chr${chr}.psam")
+    tuple file("chr${chr}.pgen"), file("chr${chr}.pvar"), file("chr${chr}.psam")
 
     """
     plink2 --bgen $bgen ref-first --sample $sample \
@@ -107,15 +125,29 @@ process filter {
            --keep $params.keep \
            --extract bed1 $params.regions \
            --remove-nosex \
+           --rm-dup exclude-all \
            --make-pgen --out chr$chr --threads 12
     """
+}
+
+process merge {
+
+   input:
+   file(f)
+ 
+   output:
+   tuple file('aid.pgen'), file('aid.psam'), file('aid.pvar')   
+
+   """
+   ls chr*pgen | sort -V | sed 's/.pgen//' > tomerge.txt
+   plink2 --pmerge-list tomerge.txt --make-pgen --out aid
+   """
 }
 
 // Pipeline
 
 workflow {
-in = Channel.of(21..22)
+in = Channel.of(chrlist).flatten()
         .map { it -> [it, file("${params.geno_dir}/ukb22828_c${it}_b0_v3.bgen"), file("${params.geno_dir}/ukb22828_c${it}_b0_v3_s487271.sample")]}
-//        .concat(Channel.of(['X', file("${params.geno_dir}/ukb22828_cX_b0_v3.bgen"), file("${params.geno_dir}/ukb22828_cX_b0_v3_s486620.sample")]))
-filter(in).view()
+filter(in, file(params.keep), file(params.regions)) | flatten | collectFile | collect | merge | view
 }

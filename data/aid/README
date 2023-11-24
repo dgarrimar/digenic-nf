@@ -13,6 +13,12 @@ Rscript pcaproc.R
 
 cut -d ' ' -f1 chr22.sample | sed '1,2d' | grep -Fvf withdraw.txt | grep -Ff european.txt > keep.txt
 
+paste keep.txt keep.txt > keep2.txt
+cat <(echo -e "#FID\tIID") keep2.txt > tmp; mv tmp keep2.txt
+
 Rscript rmrel.R
+# qsub -N rmrel -q rg-el7 -l virtual_free=20G,h_rt=168:00:00 -cwd -j y -o rmrel2.log -b y 'Rscript rmrel2.R'
 
 grep -Ffv related2rm.txt keep.txt > tmp; mv tmp keep.txt
+
+cat aid_exons.bed | cut -f1 | sort -V | uniq | awk -vORS=, '{ print $1 }' | sed 's/,$/\n/' # To get chr list

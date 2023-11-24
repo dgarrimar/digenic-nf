@@ -1,4 +1,4 @@
-// main script name
+	// main script name
 manifest.mainScript = 'digenic.nf'
 
 // DSL2
@@ -26,10 +26,10 @@ singularity {
 process {
     // Container ID in DockerHub
     container = 'dgarrimar/digenic:latest'
-    queue = 'rg-el7'
+    queue = 'rg-el7,short-centos79,long-centos79'
     withName: filter {
-        cpus = 4
-        memory = 16.GB
+        cpus = 12
+        memory = 32.GB
     }
 }
 
