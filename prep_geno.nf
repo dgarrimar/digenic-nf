@@ -86,12 +86,14 @@ if (!params.geno_dir) {
     exit 1, 'Individual list file not specified'
 } else if (! params.regions) {
     exit 1, 'Regions BED file not specified'
-}
+} else if (! params.chr) {
+    exit 1, 'Chromosome list not specified'
+} 
 
 // Expand chr parameter
 def chrlist = []
 if (params.chr =~ /,/) {
-     chrlist = params.chr.tokenize(',')
+    chrlist = params.chr.tokenize(',')
 } else if (params.chr =~ /:/) {
     def (start, end) = params.chr.tokenize(':')
     def val = start.toInteger()
@@ -105,7 +107,7 @@ if (params.chr =~ /,/) {
 
 // Processes
 
-process filter {
+process Filter {
 
     tag { "chr${chr}" }
 
@@ -130,7 +132,9 @@ process filter {
     """
 }
 
-process merge {
+process Merge {
+
+   publishDir "${params.out_dir}", mode: 'copy'
 
    input:
    file(f)
@@ -140,14 +144,33 @@ process merge {
 
    """
    ls chr*pgen | sort -V | sed 's/.pgen//' > tomerge.txt
-   plink2 --pmerge-list tomerge.txt --make-pgen --out aid
+   plink2 --pmerge-list tomerge.txt --out aid
+   """
+}
+
+process Pairs {
+
+   publishDir "${params.out_dir}", mode: 'copy'
+
+   input:
+   tuple file(pgen), file(psam), file(pvar)
+
+
+   output:
+   file('pairs.tsv')
+
+   """
+   awk 'NR>1{print \$1":"\$2"-"\$2}' $pvar > variants.txt
+   combos_diffchr.py -i variants.txt > pairs.tsv
    """
 }
 
 // Pipeline
 
 workflow {
-in = Channel.of(chrlist).flatten()
+In = Channel.of(chrlist)
+        .flatten()
         .map { it -> [it, file("${params.geno_dir}/ukb22828_c${it}_b0_v3.bgen"), file("${params.geno_dir}/ukb22828_c${it}_b0_v3_s487271.sample")]}
-filter(in, file(params.keep), file(params.regions)) | flatten | collectFile | collect | merge | view
+aid_plink2 = Filter(In, file(params.keep), file(params.regions)) | flatten | collectFile | collect | Merge
+Pairs(aid_plink2)
 }

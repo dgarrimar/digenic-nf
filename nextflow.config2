@@ -1,4 +1,4 @@
-	// main script name
+// main script name
 manifest.mainScript = 'digenic.nf'
 
 // DSL2
@@ -27,7 +27,7 @@ process {
     // Container ID in DockerHub
     container = 'dgarrimar/digenic:latest'
     queue = 'rg-el7,short-centos79,long-centos79'
-    withName: filter {
+    withName: Filter {
         cpus = 12
         memory = 32.GB
     }
