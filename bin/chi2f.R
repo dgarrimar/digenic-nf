@@ -16,9 +16,10 @@ for (i in 1:nrow(pairs)) {
     start=Sys.time()
     # Tabix, load data
     pair = pairs[i, ]
+#    message(pair) # debug
     one = pair[, 1]
     two = pair[, 2]
-    if (one %in% blacklist | two %in% blacklist){
+    if (one %in% blacklist | two %in% blacklist) {
         next
     }
     if (one == one_bckp) {
@@ -49,19 +50,27 @@ for (i in 1:nrow(pairs)) {
     }
     nms1 = nms1[keep1]
     minor1 = nms1[which.min(tbl1)]
+    if (length(nms1) == 3 & minor1 == "1") {
+        mask1 = (nms1 != "1")
+        minor1 = nms1[mask1][which.min(tbl1[mask1])]
+    }
     major1 = nms1[!nms1 %in% c(1, minor1)]
     minor_het1 = unique(c(minor1, "1"))
-    
+     
     tbl2 = tabulate(snp2+1, 3)
     names(tbl2) = nms2
     keep2 = tbl2>0
     tbl2 = tbl2[keep2]
-    if(length(tbl2)==1){
+    if(length(tbl2)==1) {
          blacklist = c(blacklist, two)
          next
     }
     nms2 = nms2[keep2]
     minor2 = nms2[which.min(tbl2)]
+    if (length(nms2) == 3 & minor2 == "1") {
+        mask2 = (nms2 != "1")
+        minor2 = nms2[mask2][which.min(tbl2[mask2])]
+    }
     major2 = nms2[!nms2 %in% c(1, minor2)]
     minor_het2 = unique(c(minor2, "1"))
     
