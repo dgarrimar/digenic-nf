@@ -155,7 +155,7 @@ process Pairs {
 
    """
    awk 'NR>1{print \$1":"\$2"-"\$2}' $pvar > variants.txt
-   combos_diffchr.py -i variants.txt > pairs.tsv
+   combos_diffchr.py -i variants.txt > pairs.txt
    """
 }
 

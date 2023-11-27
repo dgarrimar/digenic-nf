@@ -1,0 +1,36 @@
+N E X T F L O W  ~  version 23.04.4
+Launching `prep_geno.nf` [sick_mercator] DSL2 - revision: abccfe1d21
+
+Parameters
+------------------
+Genotypes                    : /no_backup_isis/rg/dgarrido/downloads/UKBB/ukb46228/gt
+Output directory             : result
+Minimum MAF                  : 0.0001
+Maximum MAF                  : 0.9999
+Max. missingess rate (vars)  : 0.05
+HWE P-value treshold         : 0.00001
+List of individuals          : /users/rg/dgarrido/projects/digenic/digenic-nf/data/aid/keep2.txt
+List of regions (BED)        : /users/rg/dgarrido/projects/digenic/digenic-nf/data/aid/aid_exons.bed
+List of chromosomes          : 1,2,3,4,5,6,9,11,12,13,14,15,16,17,18,19,20,22,X
+
+[d0/01e6af] Submitted process > Filter (chr5)
+[69/6e2dec] Submitted process > Filter (chr2)
+[11/642e98] Submitted process > Filter (chr1)
+[13/a31993] Submitted process > Filter (chr4)
+[69/09e1b1] Submitted process > Filter (chr6)
+[60/745214] Submitted process > Filter (chr11)
+[5e/ec7455] Submitted process > Filter (chr3)
+[7a/0c5c07] Submitted process > Filter (chr9)
+[4b/579838] Submitted process > Filter (chr13)
+[eb/b6c47a] Submitted process > Filter (chr12)
+[ba/265f24] Submitted process > Filter (chr14)
+[b4/bd9029] Submitted process > Filter (chr16)
+[5d/7292b5] Submitted process > Filter (chr17)
+[c6/f50968] Submitted process > Filter (chr18)
+[67/cafb83] Submitted process > Filter (chr15)
+[46/584e6f] Submitted process > Filter (chr19)
+[af/e259c5] Submitted process > Filter (chrX)
+[f0/a29b38] Submitted process > Filter (chr22)
+[d5/fa1a1f] Submitted process > Filter (chr20)
+[4f/fe981c] Submitted process > Merge
+[22/085cfc] Submitted process > Pairs
