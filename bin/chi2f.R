@@ -10,6 +10,7 @@ pairs = fread(args[1], h = F, data.table = F)
 # Iterator
 gt.f = args[2]
 one_bckp = ''
+blacklist = c()
 for (i in 1:nrow(pairs)) {
     
     start=Sys.time()
@@ -17,6 +18,9 @@ for (i in 1:nrow(pairs)) {
     pair = pairs[i, ]
     one = pair[, 1]
     two = pair[, 2]
+    if (one %in% blacklist | two %in% blacklist){
+        next
+    }
     if (one == one_bckp) {
         system(sprintf("tabix %s %s | cut -f4- | sed 's/\\t/\\n/g' > two.txt", gt.f, two))
         src2 = fread("two.txt", h = F, data.table = F)[,1]
@@ -39,6 +43,10 @@ for (i in 1:nrow(pairs)) {
     names(tbl1) = nms1
     keep1 = tbl1>0
     tbl1 = tbl1[keep1]
+    if(length(tbl1)==1){
+        blacklist = c(blacklist, one)
+        next
+    }
     nms1 = nms1[keep1]
     minor1 = nms1[which.min(tbl1)]
     major1 = nms1[!nms1 %in% c(1, minor1)]
@@ -48,6 +56,10 @@ for (i in 1:nrow(pairs)) {
     names(tbl2) = nms2
     keep2 = tbl2>0
     tbl2 = tbl2[keep2]
+    if(length(tbl2)==1){
+         blacklist = c(blacklist, two)
+         next
+    }
     nms2 = nms2[keep2]
     minor2 = nms2[which.min(tbl2)]
     major2 = nms2[!nms2 %in% c(1, minor2)]
