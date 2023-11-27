@@ -91,16 +91,10 @@ if (!params.geno_dir) {
 } 
 
 // Expand chr parameter
-def chrlist = []
+
+chrlist = []
 if (params.chr =~ /,/) {
     chrlist = params.chr.tokenize(',')
-} else if (params.chr =~ /:/) {
-    def (start, end) = params.chr.tokenize(':')
-    def val = start.toInteger()
-    while (val <= end.toInteger()) {
-        chrlist += val
-        val += 1
-    }
 } else {
     chrlist = params.chr
 }
@@ -170,7 +164,7 @@ process Pairs {
 workflow {
 In = Channel.of(chrlist)
         .flatten()
-        .map { it -> [it, file("${params.geno_dir}/ukb22828_c${it}_b0_v3.bgen"), file("${params.geno_dir}/ukb22828_c${it}_b0_v3_s487271.sample")]}
+        .map { it -> [it, file("${params.geno_dir}/ukb22828_c${it}_b0_v3.bgen"), file("${params.geno_dir}/ukb22828_c${it}_b0_v3_*.sample")]}
 aid_plink2 = Filter(In, file(params.keep), file(params.regions)) | flatten | collectFile | collect | Merge
 Pairs(aid_plink2)
 }
