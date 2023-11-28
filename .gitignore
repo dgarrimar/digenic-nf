@@ -1,10 +1,14 @@
+data/aid
 data/ukb
+annotation
 result*
 singularity
 *.dot
 *.html
 .nextflow*
 trace*
+report*
+dag*
 work
 run*
-log*
+*log
