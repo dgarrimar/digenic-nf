@@ -1,0 +1,42 @@
+// main script name
+manifest.mainScript = 'digenic.nf'
+
+// DSL2
+nextflow.enable.dsl=2
+
+// small input dataset for testing
+//params {
+//    geno = "$baseDir/"
+//}
+
+// Docker is disabled by default and uses the following options when activated
+docker {
+    sudo = false
+    fixOwnership = true
+    runOptions = '-u $(id -u)'
+}
+
+// Singularity is disabled by default and uses autoMounts when enabled
+singularity {
+    cacheDir = 'singularity'
+    autoMounts = true
+}
+
+// Process configuration
+process {
+    // Container ID in DockerHub
+    container = 'dgarrimar/digenic:latest'
+    queue = 'rg-el7,short-centos79,long-centos79'
+    withName: Filter {
+        cpus = 12
+        memory = 32.GB
+    }
+}
+
+profiles {
+    local {
+        executor {
+            name = 'local'
+        }
+    }
+}
