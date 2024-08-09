@@ -151,7 +151,7 @@ process Pairs {
 
 
    output:
-   file('pairs.tsv')
+   file('pairs.txt')
 
    """
    awk 'NR>1{print \$1":"\$2"-"\$2}' $pvar > variants.txt
