@@ -3,9 +3,7 @@
 /*
  * Copyright (c) 2023, Diego Garrido-Martín
  *
- * Simulation setting to benchmark the TIE and power of multivariate 
- * methods (MANTA, MANOVA and GEMMA) in the context of multi-trait 
- * GWAS studies.
+ * Preprocessing for digenic combination analyses
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
