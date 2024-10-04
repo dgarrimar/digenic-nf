@@ -1,5 +1,7 @@
 data/aid
 data/ukb
+data/wgs
+downstream
 annotation
 result*
 singularity
