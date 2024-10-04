@@ -31,6 +31,9 @@ process {
         cpus = 12
         memory = 32.GB
     }
+    withName: Pairs {
+        memory = 64.GB
+    }
 }
 
 profiles {
