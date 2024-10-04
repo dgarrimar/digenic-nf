@@ -1,8 +1,8 @@
 FROM rocker/r-ver:4.3.1
 
-LABEL maintainer "Diego Garrido-Martín <dgarrido@ub.edu>" \
-      version "0.0.1" \
-      description "Docker image for digenic-nf"
+LABEL maintainer="Diego Garrido-Martín <dgarrido@ub.edu>" \
+      version="1.0.0" \
+      description="Docker image for digenic-nf"
 
 RUN apt-get update --fix-missing -qq && apt-get install -y -q \
 # bcftools dependencies
@@ -37,12 +37,12 @@ RUN cd bcftools-1.18/htslib-1.18 \
     && make install
 
 ## Install PLINK2
-RUN wget --quiet https://s3.amazonaws.com/plink2-assets/alpha4/plink2_linux_x86_64_20230922.zip \
-    && unzip plink2_linux_x86_64_20230922.zip \
+RUN wget --quiet https://s3.amazonaws.com/plink2-assets/alpha5/plink2_linux_x86_64_20240820.zip \
+    && unzip plink2_linux_x86_64_20240820.zip \
     && mv plink2 /usr/local/bin/
 
 ## Install python packages
 RUN pip3 install numpy
 
 ## Install R packages
-RUN R -e 'install.packages(c("optparse", "data.table"))'
+RUN R -e 'install.packages(c("optparse", "data.table", "bigtabulate"))'
