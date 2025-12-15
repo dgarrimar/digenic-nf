@@ -1,0 +1,24 @@
+## REGIONS
+# ExonsListAID.txt (Ferran Casals by email)
+sed -r 's/\r//g; s/chr//' ExonsListAID.txt | awk 'BEGIN{FS=OFS="\t"}{print $2,$3,$4,$1}' | sort -k1,1V -k2,2n -k3,3n > aid_exons.bed
+
+
+## INDIVIDUALS
+ln -s /nfs/no_backup_isis/rg/dgarrido/downloads/UKBB/ukb46228/withdraw50141_131_20230915.txt withdraw.txt
+ln -s /nfs/no_backup_isis/rg/dgarrido/downloads/UKBB/ukb46228/gt/ukb22828_c22_b0_v3_s487271.sample chr22.sample
+ln -s /no_backup_isis/rg/dgarrido/downloads/UKBB/ukb46228/ukb_rel_a50141_s488118.dat input/king.txt
+
+cut -f1,14 /nfs/no_backup_isis/rg/dgarrido/downloads/UKBB/ukb46228/ukb46228.tab2 | sed '1d' > ancestry_sr.txt
+Rscript pcaproc.R
+
+cut -d ' ' -f1 chr22.sample | sed '1,2d' | grep -Fvf withdraw.txt | grep -Ff european.txt > keep.txt
+
+paste keep.txt keep.txt > keep2.txt
+cat <(echo -e "#FID\tIID") keep2.txt > tmp; mv tmp keep2.txt
+
+Rscript rmrel.R
+# qsub -N rmrel -q rg-el7 -l virtual_free=20G,h_rt=168:00:00 -cwd -j y -o rmrel2.log -b y 'Rscript rmrel2.R'
+
+grep -Ffv related2rm.txt keep.txt > tmp; mv tmp keep.txt
+
+cat aid_exons.bed | cut -f1 | sort -V | uniq | awk -vORS=, '{ print $1 }' | sed 's/,$/\n/' # To get chr list
